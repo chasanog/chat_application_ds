@@ -1,7 +1,13 @@
 import socket
 
+import multicast_sender
+import ports
+import server_data
+
 # Create a UDP socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+host_address = (server_data.SERVER_IP, ports.SERVER)
 
 # Server application IP address and port
 server_address = '127.0.0.1'
@@ -32,3 +38,8 @@ while True:
         # Send message to client
         client.send(str.encode(message))
         print(f'Replied to client: ', message)
+        break
+
+
+if __name__ == '__main__':
+    multicastReceiver = multicast_sender.requestToMulticast()

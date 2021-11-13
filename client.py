@@ -8,7 +8,7 @@ server_address = '127.0.0.1'
 server_port = 10001
 
 # Buffer size
-buffer_size = 1024
+BUFFER_SIZE = 1024
 
 # Message sent to server
 message = 'Hi server!'
@@ -23,7 +23,7 @@ try:
     # Receive response from server
     print('Waiting for response...')
     #server_data, server = client_socket.accept()
-    data = client_socket.recv(buffer_size)
+    data = client_socket.recv(BUFFER_SIZE)
     print('Received message from server: ', data.decode())
 
 finally:
