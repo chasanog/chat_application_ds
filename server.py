@@ -7,11 +7,11 @@ import server_data
 # Create a UDP socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-host_address = (server_data.SERVER_IP, ports.SERVER)
+host_address = (server_data.SERVER_IP, ports.SERVER_PORT)
 
 # Server application IP address and port
-server_address = '127.0.0.1'
-server_port = 10001
+#server_address = '10.10.10.101'
+#server_port = 10001
 
 # Buffer size
 buffer_size = 1024
@@ -20,9 +20,9 @@ buffer_size = 1024
 message = 'Hi client! Nice to connect with you!'
 
 # Bind socket to port
-server_socket.bind((server_address, server_port))
+server_socket.bind(host_address)
 server_socket.listen()
-print('Server up and running at {}:{}'.format(server_address, server_port))
+print('Server up and running at {}:{}'.format(server_data.SERVER_IP, ports.SERVER_PORT))
 
 while True:
     print('\nWaiting to receive message...\n')
