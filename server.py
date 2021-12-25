@@ -3,6 +3,7 @@ import socket
 import multicast_sender
 import ports
 import server_data
+from Bully import generate_node_id
 
 # Create a UDP socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
