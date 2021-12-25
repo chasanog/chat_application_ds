@@ -31,8 +31,16 @@ def start_receiver():
                 sock.sendto(message, address)
                 print(f'[MULTICAST RECEIVER {server_data.SERVER_IP}] Client {address} wants to join the Chat Room\n')
 
-            if len(pickle.loads(data)[0] == 0):
+            if len(pickle.loads(data)[0]) == 0:
                 multicast_data.SERVER_LIST.append(address[0]) if address[0] not in multicast_data.SERVER_LIST else multicast_data.SERVER_LIST
+                sock.sendto('ack'.encode('utf-8'), address)
+                multicast_data.network_changed = True
+
+            elif pickle.loads(data)[1] and multicast_data.LEADER != server_data.SERVER_IP or pickle.loads(data) [3]:
+                multicast_data.SERVER_LIST = pickle.loads(data)[0]
+                multicast_data.LEADER = pickle.loads(data)[1]
+                multicast_data.CLIENT_LIST = pickle.loads(data)[4]
+                print(f'[MULTICAST RECEIVER {server_data.SERVER_IP}] All Data have been updated')
                 sock.sendto('ack'.encode('utf-8'), address)
                 multicast_data.network_changed = True
 
