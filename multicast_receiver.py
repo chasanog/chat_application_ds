@@ -32,4 +32,5 @@ def start_receiver():
                 multicast_data.network_changed = True
 
         except KeyboardInterrupt:
+            socket.close()
             print(f'[MULTICAST RECEIVER {server_data.SERVER_IP}] Closing UDP Socket')
