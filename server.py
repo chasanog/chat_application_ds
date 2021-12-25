@@ -81,5 +81,5 @@ if __name__ == '__main__':
 
         except KeyboardInterrupt:
             server_socket.close()
-            print(f'\n Closing Server for IP {server_data.SERVER_IP} on PORT {ports.SERVER_PORT}')
+            print(f'\nClosing Server for IP {server_data.SERVER_IP} on PORT {ports.SERVER_PORT}')
             break

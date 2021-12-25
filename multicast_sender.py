@@ -24,7 +24,7 @@ def requestToMulticast():
     sleep(1)
     message = pickle.dumps([multicast_data.SERVER_LIST, multicast_data.LEADER])
     sock.sendto(message, multicastAddress)
-    print(f'\n [MULTICAST SENDER {server_data.SERVER_IP}] Sending data to Multicast Receivers {multicastAddress}')
+    print(f'\n[MULTICAST SENDER {server_data.SERVER_IP}] Sending data to Multicast Receivers {multicastAddress}')
 
     try:
         sock.recvfrom(1024)

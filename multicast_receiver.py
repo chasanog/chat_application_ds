@@ -19,7 +19,7 @@ def start_receiver():
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-    print(f'\n [MULTICAST RECEIVER {server_data.SERVER_IP}] Starting UDP Socket and listening on Port {ports.MULTICAST}')
+    print(f'\n[MULTICAST RECEIVER {server_data.SERVER_IP}] Starting UDP Socket and listening on Port {ports.MULTICAST}')
 
     while True:
         try:
