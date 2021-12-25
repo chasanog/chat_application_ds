@@ -70,9 +70,10 @@ if __name__ == '__main__':
     if not multicastReceiver:
         multicast_data.SERVER_LIST.append(server_data.SERVER_IP)
         multicast_data.LEADER = server_data.SERVER_IP
-
+    print(multicast_data.SERVER_LIST)
     thread_helper.newThread(multicast_receiver.start_receiver(), ())
     thread_helper.newThread(bind_server_sock(), ())
+
 
     while True:
         try:

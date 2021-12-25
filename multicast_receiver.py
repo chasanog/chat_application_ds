@@ -7,7 +7,7 @@ import ports
 import server_data
 
 multicastIP = multicast_data.MCAST_GRP
-serverAddress = ('', ports.MULTICAST)
+serverAddress = ('', multicast_data.MCAST_PORT)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -19,12 +19,17 @@ def start_receiver():
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-    print(f'\n[MULTICAST RECEIVER {server_data.SERVER_IP}] Starting UDP Socket and listening on Port {ports.MULTICAST}')
+    print(f'\n[MULTICAST RECEIVER {server_data.SERVER_IP}] Starting UDP Socket and listening on Port {multicast_data.MCAST_PORT}')
 
     while True:
         try:
             data, address = sock.recvfrom(1024)
             print(f'[MULTICAST RECEIVER {server_data.SERVER_IP}] Received data from {address} \n')
+
+            if multicast_data.LEADER == server_data.SERVER_IP and pickle.loads(data) [0] == 'JOIN':
+                message = pickle.dumps([multicast_data.LEADER, ''])
+                sock.sendto(message, address)
+                print(f'[MULTICAST RECEIVER {server_data.SERVER_IP}] Client {address} wants to join the Chat Room\n')
 
             if len(pickle.loads(data)[0] == 0):
                 multicast_data.SERVER_LIST.append(address[0]) if address[0] not in multicast_data.SERVER_LIST else multicast_data.SERVER_LIST
