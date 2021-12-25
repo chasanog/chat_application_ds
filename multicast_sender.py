@@ -33,6 +33,5 @@ def requestToMulticast():
             print(f'[MULTICAST SENDER {sock.getsockname()[0]}] All Servers have been updated \n')
         return True
     except socket.timeout:
-        socket.close()
         print(f'[MULTICAST SENDER {server_data.SERVER_IP}] Multicast Receiver not detected')
         return False
