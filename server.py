@@ -11,15 +11,11 @@ from Bully import generate_node_id
 import thread_helper
 
 
-# Create a UDP socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-host_address = (server_data.SERVER_IP, ports.SERVER_PORT)
+# Create a TCP socket
+#server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#host_address = (server_data.SERVER_IP, ports.SERVER_PORT)
 
-
-# Server application IP address and port
-#server_address = '10.10.10.101'
-#server_port = 10001
 
 # Buffer size
 buffer_size = 1024
@@ -33,10 +29,19 @@ message = 'Hi client! Nice to connect with you!'
 #print('Server up and running at {}:{}'.format(server_data.SERVER_IP, ports.SERVER_PORT))
 
 def bind_server_sock():
-    server_socket.bind(host_address)
-    server_socket.listen()
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        host_address = (server_data.SERVER_IP, ports.SERVER_PORT)
+        print(f'Server started on IP {server_data.SERVER_IP} and PORT {ports.SERVER_PORT}')
 
-    print(f'\n [SERVER INFO] Listening on IP {server_socket.getsockname()[0]} and PORT {ports.SERVER_PORT}')
+        server_socket.bind(host_address)
+        server_socket.listen()
+        print(f'Server is waiting for client connections...')
+    except socket.error as err:
+        print(f'Could not start Server. Error: {err}')
+
+    #print(f'\n [SERVER INFO] Listening on IP {server_socket.getsockname()[0]} and PORT {ports.SERVER_PORT}')
 
     while True:
         try:
@@ -70,15 +75,19 @@ if __name__ == '__main__':
     if not multicastReceiver:
         multicast_data.SERVER_LIST.append(server_data.SERVER_IP)
         multicast_data.LEADER = server_data.SERVER_IP
-    print(multicast_data.SERVER_LIST)
     thread_helper.newThread(multicast_receiver.start_receiver(), ())
     thread_helper.newThread(bind_server_sock(), ())
 
 
     while True:
         try:
-            if multicast_data.LEADER == server_data.SERVER_IP:
+            if multicast_data.LEADER == server_data.SERVER_IP and multicast_data.network_state_changed:
                 multicast_sender.requestToMulticast()
+                multicast_data.network_state_changed = False
+
+            elif multicast_data.LEADER != server_data.SERVER_IP and multicast_data.network_state_changed:
+                multicast_data.network_state_changed = False
+
 
         except KeyboardInterrupt:
             server_socket.close()
