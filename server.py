@@ -1,9 +1,12 @@
+import pickle
 import socket
+import sys
 
 import multicast_data
 import multicast_receiver
 import multicast_sender
 import ports
+import server
 import server_data
 
 from Bully import generate_node_id
@@ -23,13 +26,44 @@ buffer_size = 1024
 # Message to be sent to client
 message = 'Hi client! Nice to connect with you!'
 
-# Bind socket to port
-#server_socket.bind(host_address)
-#server_socket.listen()
-#print('Server up and running at {}:{}'.format(server_data.SERVER_IP, ports.SERVER_PORT))
+isLeader = False
+
+def update_server_list(serverList):
+    #TODO Heartbeat
+    if server.isLeader == False:
+        server.isLeader = True
+        print(f'Server list is empty. New Leader is {server_data.SERVER_IP}')
+
+    #elif len(serverList) > 0:
+        #TODO Heartbeat
+
+    else:
+        serverList = serverList
+        print(f'New Server list is: {serverList}')
+
+def send_updated_server_list():
+    if isLeader == True:
+        for i in range(len(multicast_data.SERVER_LIST)):
+            serverAddress, leader = multicast_data.SERVER_LIST[i]
+
+            #TODO
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(3)
+
+            try:
+                newServerList = pickle.dumps(multicast_data.SERVER_LIST)
+                sock.send(newServerList)
+            except:
+                print(f'Server {serverAddress} not reachable. Server List could not be updated')
+            finally:
+                sock.close()
+    else:
+        print(f'Server List is empty. Doing nothing.')
+
 
 def bind_server_sock():
     try:
+        #TCP Socket
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         host_address = (server_data.SERVER_IP, ports.SERVER_PORT)
@@ -70,23 +104,42 @@ def bind_server_sock():
 
 
 if __name__ == '__main__':
+
+    """
+    try:
+        first_argv = sys.argv[1]
+        if first_argv == 'leader' or 'Leader':
+            print(f'New Leader is: {server_data.SERVER_IP}')
+            isLeader=True
+    except:
+        pass
+
+    thread_helper.newThread(bind_server_sock(), ())
+    
+    if isLeader == False:
+    """
+
     multicastReceiver = multicast_sender.requestToMulticast()
+
+
 
     if not multicastReceiver:
         multicast_data.SERVER_LIST.append(server_data.SERVER_IP)
         multicast_data.LEADER = server_data.SERVER_IP
-    thread_helper.newThread(multicast_receiver.start_receiver(), ())
-    thread_helper.newThread(bind_server_sock(), ())
+        isLeader = True
+
+    thread_helper.newThread(multicast_receiver.start_receiver, ())
+    thread_helper.newThread(bind_server_sock, ())
 
 
     while True:
         try:
-            if multicast_data.LEADER == server_data.SERVER_IP and multicast_data.network_state_changed:
+            if isLeader and multicast_data.network_state:
                 multicast_sender.requestToMulticast()
-                multicast_data.network_state_changed = False
+                multicast_data.network_state = False
 
-            elif multicast_data.LEADER != server_data.SERVER_IP and multicast_data.network_state_changed:
-                multicast_data.network_state_changed = False
+            elif isLeader == False and multicast_data.network_state:
+                multicast_data.network_state = False
 
 
         except KeyboardInterrupt:

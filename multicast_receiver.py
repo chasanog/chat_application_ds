@@ -3,6 +3,7 @@ import socket
 import struct
 
 import multicast_data
+import server
 import server_data
 
 multicastIP = multicast_data.MCAST_GRP
@@ -34,11 +35,12 @@ def start_receiver():
                 print(f'{server_data.SERVER_IP}: "{address}" wants to join the Chat Room\n')
 
             if len(pickle_load_reader(data, 0)) == 0:
-                multicast_data.SERVER_LIST.append(address[0]) if address[0] not in multicast_data.SERVER_LIST else multicast_data.SERVER_LIST
-                print(f'{server_data.SERVER_IP}: replica server joined')
-                print(f'Current serverlist: {multicast_data.SERVER_LIST}')
+                multicast_data.SERVER_LIST.append((address[0], False)) if address[0] not in multicast_data.SERVER_LIST else multicast_data.SERVER_LIST
+                print(f'{server_data.SERVER_IP}: replica server joined {address}')
+                server.update_server_list(multicast_data.SERVER_LIST)
+                server.send_updated_server_list()
                 sock.sendto('ack'.encode('utf-8'), address)
-                multicast_data.network_state_changed = True
+                multicast_data.network_state = True
 
             elif pickle_load_reader(data, 1) and multicast_data.LEADER != server_data.SERVER_IP or pickle_load_reader(data, 3):
                 multicast_data.SERVER_LIST = pickle_load_reader(data, 0)
@@ -46,7 +48,7 @@ def start_receiver():
                 multicast_data.CLIENT_LIST = pickle_load_reader(data, 4)
                 print(f'{server_data.SERVER_IP}: Data has been updated')
                 sock.sendto('ack'.encode('utf-8'), address)
-                multicast_data.network_state_changed = True
+                multicast_data.network_state = True
 
         except KeyboardInterrupt:
             socket.close()

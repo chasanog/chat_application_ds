@@ -10,6 +10,6 @@ CLIENT_LIST = []
 
 
 client_running = False
-network_state_changed = False
+network_state = False
 leader_server_crashed = ''
 replica_server_crashed = ''
