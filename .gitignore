@@ -102,6 +102,8 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+copy.sh
+
 # Editor-based Rest Client
 .idea/httpRequests
 
