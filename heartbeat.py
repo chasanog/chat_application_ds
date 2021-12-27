@@ -8,14 +8,16 @@ Group:  10
 import socket
 import sys
 import time
-
 import ports
+import server_data
 from server import *
 
 # used from Server
 
 def start_heartbeat():
     msg = ("Heartbeat")
+    while True:
+        sleep(3)  # failure detection every 3 seconds
     for x in range(len(multicast_data.SERVER_LIST)):
         ip = multicast_data.SERVER_LIST[x]
         # Create TCP socket
@@ -46,17 +48,17 @@ def start_heartbeat():
                 print('Leader crash detected')
                 # Remove crashed leader from serverlist
                 multicast_data.SERVER_LIST.pop(failed_server)
-
+                print('Removed crashed leader server', ip, 'from serverlist')
             else:
                 # Remove crashed server from serverlist
                 multicast_data.SERVER_LIST.pop(failed_server)
+                print('Removed crashed server', ip, 'from serverlist')
 
         finally:
             s.close()
 
 
-
-def listenHeartbeat():
+def listen_heartbeat():
 
     server_address = ('', ports.HEARTBEAT_PORT)
 
@@ -72,3 +74,18 @@ def listenHeartbeat():
         if heartbeat_msg:
             print('Listening Heartbeat: sending Heartbeat back to: {} '.format(server_address))
             connection.sendall(heartbeat_msg.encode())
+
+
+    def restart_heartbeat():
+        # if leader crashed start election
+        if server_data.LEADER_CRASH == True:
+            server_data.LEADER_CRASH = False
+            print('Starting Leader Election')
+            #startElection(self.serverlist,host_ip_address)
+
+        # => Restart heartbeat-thread
+        """ 
+        print("Restarting Heartbeat")
+        self.heartbeat_thread = threading.Thread(target=self.startHeartbeat)  #overwrite dead thread and create new thread and rerun heartbeat
+        self.heartbeat_thread.start()
+        """
