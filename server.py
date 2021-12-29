@@ -23,34 +23,87 @@ import thread_helper
 # Buffer size
 buffer_size = 1024
 
-# Message to be sent to client
-message = 'Hi client! Nice to connect with you!'
+def send_leader():
+    #sender_template(multicast_data.LEADER, server_data.SERVER_IP, multicast_data.SERVER_LIST, ports.LEADER_NOTIFICATION_PORT, "leader")
+    if multicast_data.LEADER == server_data.SERVER_IP and len(multicast_data.SERVER_LIST) > 0:
+        for i in range(len(multicast_data.SERVER_LIST)):
+            replica = multicast_data.SERVER_LIST[i]
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            try:
+                sock.connect((replica, ports.LEADER_NOTIFICATION_PORT))
+                leader_message = pickle.dumps(multicast_data.LEADER)
+                sock.send(leader_message)
+                print(f'Updating Leader for {replica}')
+            except:
+                print(f'Failed to send Leader address to {replica}')
+            finally:
+                sock.close()
 
+"""
+def sender_template(leader, server_ip, server_list, port, msg):
+    if leader == server_ip and len(server_list) > 0:
+        for i in range(len(server_list)):
+            if server_list[i] != server_ip:
+                replica = server_list[i]
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
+                try:
+                    sock.client((replica, port))
+                    message = pickle.dumps(leader)
+                    sock.send(message)
+                    print(f'Updating Leader for {msg}')
+                    
+                    try:
+                        response = sock.recv(1024).decode()
+                        print(response)
+                    except socket.timeout:
+                        print(f'no respones to {msg} update from {replica}')
+                   
+                except:
+                    print(f'Failed to send {msg} to {replica}')
+                finally:
+                    sock.close()
+
+"""
+def receive_leader():
+    server_address = ('', ports.LEADER_NOTIFICATION_PORT)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(server_address)
+    sock.listen()
+
+    while True:
+        connection, leader_address = sock.accept()
+        leader = pickle.loads(connection.recv(1024))
+        
+        multicast_data.LEADER = leader
+        print(f'LEADER IS: {multicast_data.LEADER}')
 
 def send_server_list():
+    #sender_template(multicast_data.LEADER, server_data.SERVER_IP, multicast_data.SERVER_LIST, ports.SERVERLIST_UPDATE_PORT)
     if multicast_data.LEADER == server_data.SERVER_IP and len(multicast_data.SERVER_LIST) > 0:
         for i in range(len(multicast_data.SERVER_LIST)):
             if multicast_data.SERVER_LIST[i] != server_data.SERVER_IP:
                 replica = multicast_data.SERVER_LIST[i]
-                print(f'replica: {replica}')
-                ip= replica
-
+                ip = replica
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(3)
+                sock.settimeout(1)
 
                 try:
                     sock.connect((ip, ports.SERVERLIST_UPDATE_PORT))
 
                     updated_list = pickle.dumps(multicast_data.SERVER_LIST)
                     sock.send(updated_list)
-                    print(f'SENDING UPDATED LIST: {updated_list.decode()}')
+                    print(f'Updating Server List for {ip}')
+                    """
                     try:
-                        respone = sock.recv(1024).decode()
-                        print(respone)
+                        response = sock.recv(1024).decode()
+                        print(response)
                     except socket.timeout:
-                        print(f'no response from {ip}')
+                        print(f'no response to server list update from {ip}')
+                    """
                 except:
-                    print(f'failed to send serverlist{ip}')
+                    print(f'failed to send serverlist {ip}')
                 finally:
                     sock.close()
 
@@ -81,87 +134,11 @@ def receive_server_list():
                 sleep(0.5)
 
 
-def send_leader_data2():
-    while True:
-        if len(server_data.replica_data) == 0:
-            print('no replica servers available')
-        else:
-            for i in range(len(server_data.replica_data)):
-                replica = server_data.replica_data[i]
-                ip, port = replica
-
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(2)
-
-                try:
-                    sock.connect((ip, port + 1))
-                    serverList = pickle.dumps(multicast_data.SERVER_LIST)
-                    sock.send(serverList)
-                finally:
-                    sock.close()
 
 
-def send_leader_data():
-    if multicast_data.LEADER == server_data.SERVER_IP:
-        message = server_data.SERVER_IP
-
-        for i in range(len(server_data.replica_data)):
-            ip, port = server_data.replica_data[i]
-
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-
-            try:
-                sock.connect((ip, port + 1))
-                sock.send(message.encode())
-                print(f'Hey {ip} the Leader is: {multicast_data.LEADER}')
-                try:
-                    response = sock.recv(1024)
-                    print(f'ack from {ip} is {response.decode()}')
-                except socket.timeout:
-                    pass
-            finally:
-                sock.close()
 
 
-def receive_leader_message():
-    server_address = ('', ports.SERVER_PORT_FOR_CLIENTS)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    sock.listen()
-
-    while True:
-        connection, server_address = sock.accept()
-        leader_ip = connection.recv(1024).decode()
-        for j in range(len(multicast_data.SERVER_LIST)):
-            data = multicast_data.SERVER_LIST[j]
-            ip, port = data
-            if ip == leader_ip:
-                multicast_data.LEADER = ip
-
-        respones = 'ach msg Received new leader information'
-        connection.send(respones.encode())
-        """
-        server_address = ('', replica[1])
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(server_address)
-        sock.listen()
-        print('Listening now for leader messages')
-
-        while True:
-            connection, server_address = sock.accept()
-            leader_ip = connection.recv(1024).decode()
-
-            for j in range(len(multicast_data.SERVER_LIST)):
-                data = multicast_data.SERVER_LIST[j]
-                ip, port = data
-                if ip == leader_ip:
-                    multicast_data.LEADER = ip
-
-            respones = 'ach msg Received new leader information'
-            connection.send(respones.encode())
-            
+            """
 def get_new_connections(sock):
     while True:
         if multicast_data.LEADER == server_data.SERVER_IP:
@@ -169,6 +146,46 @@ def get_new_connections(sock):
             
             if multicast_data.CLIENT_LIST:
               """
+
+def receive_new_message():
+    server_address = ('', ports.SERVER_CLIENT_MESSAGE_PORT)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(server_address)
+    sock.listen()
+    while True:
+        connection, leader_address = sock.accept()
+        message = pickle.loads(connection.recv(1024))
+        print(message.decode('uft-8'))
+
+
+def send_new_client_message(ip, msg):
+    if multicast_data.LEADER == server_data.SERVER_IP and len(multicast_data.CLIENT_LIST) > 0:
+        for i in range(len(multicast_data.CLIENT_LIST)):
+            client = multicast_data.CLIENT_LIST[i]
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            try:
+                sock.connect((client, ports.SERVER_TO_CLIENT_MESSAGE_PORT))
+                if ip != client:
+                    packed_msg = pickle.dumps(f'from {ip}: "{msg}"')
+                    sock.send(packed_msg)
+                    print(f'Sending Message for {client}')
+            except:
+                print(f'Failed to send Message to {client}')
+            finally:
+                sock.close()
+
+def new_client_message(client, address):
+    while True:
+        try:
+            data = client.recv(1024)
+            if data.decode('utf-8') != "":
+                print(f'{server_data.SERVER_IP}: new Message from {address[0]}: {data.decode("utf-8")}')
+                send_new_client_message(address[0], data.decode('utf-8'))
+                print(f'CLIENT LIST {multicast_data.CLIENT_LIST}')
+        except Exception as err:
+            print(err)
+            break
 
 def bind_server_sock():
     try:
@@ -181,34 +198,21 @@ def bind_server_sock():
         server_socket.bind(host_address)
         server_socket.listen()
         print(f'Server is waiting for client connections...')
+
+        while True:
+            try:
+                client, address = server_socket.accept()
+                client_data = client.recv(1024)
+
+                if client_data:
+                    print(f'{server_data.SERVER_IP}: Client {address[0]} is now connected')
+                    thread_helper.newThread(new_client_message, (client, address))
+            except Exception as err:
+                print(err)
+                break
     except socket.error as err:
         print(f'Could not start Server. Error: {err}')
         sys.exit()
-
-    # print(f'\n [SERVER INFO] Listening on IP {server_socket.getsockname()[0]} and PORT {ports.SERVER_PORT}')
-    """
-    while True:
-
-        try:
-            print('\nWaiting to receive message...\n')
-
-            # Receive message from client
-            client, address = server_socket.accept()
-            data = client.recv(buffer_size)
-            print("CLIENT ", client)
-            print('Received message from client: ', address)
-            print('Message: ', data.decode())
-
-            if data:
-                # Send message to client
-                client.send(str.encode(message))
-                print(f'Replied to client: ', message)
-                break
-
-        except Exception as err:
-            print(err)
-            break
-    """
 
 if __name__ == '__main__':
 
@@ -234,6 +238,7 @@ if __name__ == '__main__':
 
     if multicast_data.LEADER != server_data.SERVER_IP:
         thread_helper.newThread(receive_server_list, ())
+        thread_helper.newThread(receive_leader, ())
 
     thread_helper.newThread(multicast_receiver.start_receiver, ())
     thread_helper.newThread(bind_server_sock, ())
@@ -243,17 +248,11 @@ if __name__ == '__main__':
             if multicast_data.LEADER and multicast_data.network_state:
                 multicast_sender.requestToMulticast()
                 multicast_data.network_state = False
-                # thread_helper.newThread(send_leader_data, ())
-                print('here')
 
             elif multicast_data.LEADER != server_data.SERVER_IP and multicast_data.network_state:
                 multicast_data.network_state = False
 
-                # server_list_update(server_data.replica_data)
-                print('here 2')
-
-
         except KeyboardInterrupt:
-            server_socket.close()
+            #socket.close()
             print(f'\nClosing Server for IP {server_data.SERVER_IP} on PORT {ports.SERVER_PORT_FOR_CLIENTS}')
             break

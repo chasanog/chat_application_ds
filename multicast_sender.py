@@ -33,3 +33,15 @@ def requestToMulticast():
     except socket.timeout:
         print(f'{server_data.SERVER_IP}: Currently no receiver reachable')
         return False
+
+def requestToJoinChat():
+
+    message = pickle.dumps(['JOIN', '', '', ''])
+    sock.sendto(message, multicastAddress)
+    sleep(0.5)
+    try:
+        data, address = sock.recvfrom(1024)
+        multicast_data.LEADER = pickle.loads(data)[0]
+        return True
+    except socket.timeout:
+        return False

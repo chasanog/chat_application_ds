@@ -32,6 +32,7 @@ def start_receiver():
 
             if multicast_data.LEADER == server_data.SERVER_IP:
                 server.send_server_list()
+                server.send_leader()
             else:
                 for i in range(len(multicast_data.SERVER_LIST)):
                     replica = multicast_data.SERVER_LIST[i]
@@ -40,8 +41,10 @@ def start_receiver():
                     else:
                         multicast_data.SERVER_LIST.append(address[0])
                         server.send_server_list()
+                        server.send_leader()
                         break
             if multicast_data.LEADER == server_data.SERVER_IP and pickle.loads(data) [0] == 'JOIN':
+                multicast_data.CLIENT_LIST.append(address[0]) if address[0] not in multicast_data.CLIENT_LIST else multicast_data.CLIENT_LIST
                 message = pickle.dumps([multicast_data.LEADER, ''])
                 sock.sendto(message, address)
                 print(f'{server_data.SERVER_IP}: "{address}" wants to join the Chat Room\n')
