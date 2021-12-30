@@ -18,7 +18,6 @@ import ports
 import server_data
 from server import *
 
-
 # Sorted Ip
 def form_ring(members):
     sorted_binary_ring = sorted([socket.inet_aton(member) for member in members])
