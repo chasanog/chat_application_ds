@@ -7,6 +7,7 @@ MULTICAST_TTL = 2
 LEADER = ''
 SERVER_LIST = []
 CLIENT_LIST = []
+CLIENT_MESSAGES = []
 
 
 client_running = False
