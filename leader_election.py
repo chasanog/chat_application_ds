@@ -18,7 +18,7 @@ import ports
 import server_data
 from server import *
 
-
+neighbour = ''
 # Sorted Ip
 def form_ring(members):
     sorted_binary_ring = sorted([socket.inet_aton(member) for member in members])
@@ -46,15 +46,15 @@ def get_neighbour(ring, current_node_ip, direction='left'):
 
 # Publish new leader ip
 def sendnewLeaderMessage():
-    if server_data.LEADER_AVAILABLE == False:
+    if multicast_data.LEADER == server_data.SERVER_IP:
         # New Leader IP
-        multicast_data.LEADER = get_neighbour(form_ring(multicast_data.SERVER_LIST), multicast_data.LEADER)
-        msg = multicast_data.LEADER
+        #multicast_data.LEADER = get_neighbour(form_ring(multicast_data.SERVER_LIST), multicast_data.LEADER)
+        msg = server_data.SERVER_IP
 
         for x in range(len(multicast_data.SERVER_LIST)):
             ip = multicast_data.SERVER_LIST[x]  # serverlist consists a tuple of a tuple and a boolean. The inside tuple are the connection details host ip and port
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # create one heartbeat TCP socket for each server
-            s.settimeout(1)  # set timeout for every socket to 1 seconds
+            s.settimeout(2)  # set timeout for every socket to 1 seconds
             try:
                 s.connect((ip, ports.NEW_LEADER_PORT))  # Connect to every servers socke to inform about new leader
                 s.send(msg.encode())
@@ -87,47 +87,70 @@ def listenforNewLeaderMessage():
         response = 'ack msg.Received new leader information'  # send back ack msg
         connection.send(response.encode())
 
-        print('Received newLeaderMessage. New leader is:'.format(newleader_ip, server_data.LEADER_AVAILABLE))
+        print(f'Received newLeaderMessage. New leader is: {newleader_ip} {server_data.LEADER_AVAILABLE}')
         print('Received newLeaderMessage: new leader is:', newleader_ip)
-"""
-def listenforElectionMessage(self):
-    server_address = ('', SERVER_LEADER_ELECTION_PORT)
+        multicast_data.LEADER = newleader_ip
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a TCP/IP socket
-    sock.bind(server_address)  # Bind to the server address
+def start_leader_election(server_list, ip):
+    current_participants = []
+    current_participants.append(ip)
+
+    for i in range(len(server_list)):
+        server_address = server_list[i]
+        current_participants.append(server_address)
+
+    if len(server_list) == 1:
+        global neighbour
+        neighbour = server_list[0]
+        print(f'There is only one neighbour: {neighbour}')
+        send_election_message(ip)
+    else:
+        ring = form_ring(current_participants)
+        neighbour = get_neighbour(ring, ip, 'right')
+        print(f'Ring of Hosts: {ring} My IP: {ip}, My neighbour: {neighbour}')
+        send_election_message(ip)
+
+
+def send_election_message(msg):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)
+
+    try:
+        sock.connect((neighbour, ports.SERVER_ELECTION_PORT))
+    except:
+        print('Connecting to neighbour was not possible')
+
+    try:
+        sleep(1)
+        print(f'Sending election message to {neighbour}: "{msg}"')
+        sock.send(msg.encode())
+    except:
+        print('Message could not be delivered')
+    finally:
+        sock.close()
+
+    pass
+
+def receive_election_message():
+    server_address = ('', ports.SERVER_ELECTION_PORT)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(server_address)
     sock.listen()
-    logging.info('Listening for LCR Election messages on Port: {} '.format(SERVER_LEADER_ELECTION_PORT))
     while True:
-        connection, server_address = sock.accept()  # Wait for a connection
-        received_ip = connection.recv(1024)
-        received_ip = received_ip.decode()  # Otherwise it is a IP and election is still running
+        conn, address = sock.accept()
+        response = conn.recv(1024)
+        response = response.decode()
         sleep(2)
-        logging.info('Listening LCR Election messages: received election message: {} from {} '.format(received_ip,
-                                                                                                      server_address))
+        print(f'Received {response} from leader election')
 
-        if socket.inet_aton(received_ip) == socket.inet_aton(host_ip_address):  # If I received my IP. I am the leader
-            print("Leader Election: I'm the new leader")
-            self.isLeader = True
-            self.sendnewLeaderMessage()  # Inform other servers about the new leader
-
-            print('Checking for orderlist updates on member servers')
-
-            self.getLatestOrderlistfromServer()
-
-            if len(self.clientlist) > 0:
-                print('Checking for orderlist updates on clients')
-                self.getLatestOrderlistfromClient()
-
-            if self.ordernumber > 0:
-                print('Restarting orderlist update thread')
-                thread = threading.Thread(target=self.sendOrderlistUpdate)
-                thread.start()
-
-        elif socket.inet_aton(received_ip) > socket.inet_aton(
-                host_ip_address):  # e.g 192.168.0.67 > 192.168.0.55, if received IP is higher pass on to neighbor
-            print('Received IP(', received_ip, ') is higher than own(', host_ip_address,
-                  '). Passing higher IP to neighbour')
-            sendElectionmessage(received_ip)
+        if response == server_data.SERVER_IP:
+            print('Received my IP so I am the new Leader')
+            multicast_data.LEADER = server_data.SERVER_IP
+            sendnewLeaderMessage()
+        elif response > server_data.SERVER_IP:
+            print(f'{response} is higher than {server_data.SERVER_IP}. Giving higher IP to neighbour')
+            send_election_message(response)
         else:
-            print('Received IP(', received_ip, ') is lower than own(', host_ip_address, ') Not passing to my neighbour')
-"""
+            print(f'Received IP is not higher than mine.')
+
