@@ -28,18 +28,21 @@ def start_receiver():
     while True:
         try:
             data, address = sock.recvfrom(1024)
-            print(f'{server_data.SERVER_IP}: Received data from {address} \n')
+            if address[0] != server_data.SERVER_IP:
+                print(f'{server_data.SERVER_IP}: Received data from {address} \n')
 
             if multicast_data.LEADER == server_data.SERVER_IP:
+                server.update_server_list(multicast_data.SERVER_LIST)
                 server.send_server_list()
                 server.send_leader()
             else:
                 for i in range(len(multicast_data.SERVER_LIST)):
                     replica = multicast_data.SERVER_LIST[i]
-                    if replica == address:
+                    if replica == address[0]:
                         break
                     else:
                         multicast_data.SERVER_LIST.append(address[0])
+                        server.update_server_list(multicast_data.SERVER_LIST)
                         server.send_server_list()
                         server.send_leader()
                         break
@@ -47,6 +50,7 @@ def start_receiver():
                 multicast_data.CLIENT_LIST.append(address[0]) if address[0] not in multicast_data.CLIENT_LIST else multicast_data.CLIENT_LIST
                 message = pickle.dumps([multicast_data.LEADER, ''])
                 sock.sendto(message, address)
+                server.send_client_list()
                 print(f'{server_data.SERVER_IP}: "{address}" wants to join the Chat Room\n')
 
             if len(pickle_load_reader(data, 0)) == 0:
@@ -56,15 +60,7 @@ def start_receiver():
                 print(server_data.replica_data)
                 sock.sendto('ack'.encode('utf-8'), address)
                 multicast_data.network_state = True
-            """
-            elif pickle_load_reader(data, 1) and multicast_data.LEADER != server_data.SERVER_IP or pickle_load_reader(data, 3):
-                multicast_data.SERVER_LIST = pickle_load_reader(data, 0)
-                multicast_data.LEADER = pickle_load_reader(data, 1)
-                multicast_data.CLIENT_LIST = pickle_load_reader(data, 4)
-                print(f'{server_data.SERVER_IP}: Data has been updated')
-                sock.sendto('ack'.encode('utf-8'), address)
-                multicast_data.network_state = True
-            """
+
         except KeyboardInterrupt:
             socket.close()
             print(f'{server_data.SERVER_IP}: Closing Socket')
