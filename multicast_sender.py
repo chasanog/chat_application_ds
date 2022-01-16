@@ -27,7 +27,7 @@ def requestToMulticast():
 
     try:
         sock.recvfrom(1024)
-        if multicast_data.LEADER == sock.getsockname()[0]:
+        if multicast_data.LEADER == server_data.SERVER_IP:
             print(f'{sock.getsockname()[0]}: Sending updates to all servers\n')
         return True
     except socket.timeout:

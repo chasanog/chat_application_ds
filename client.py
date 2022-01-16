@@ -7,18 +7,20 @@ import ports
 import server
 import server_data
 import os
+import time
 import pickle
 
 import thread_helper
 
 def receive_mesage():
-    server_address = ('', ports.SERVER_TO_CLIENT_MESSAGE_PORT)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    sock.listen()
+    global client_socket
+    server_address = ('', ports.SERVER_PORT_FOR_CLIENTS)
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.bind(server_address)
+    client_socket.listen()
     while True:
         try:
-            client, address = sock.accept()
+            client, address = client_socket.accept()
             message = pickle.loads(client.recv(1024))
             if message:
                 print(f'{address[0]}: New Message {message}')
@@ -26,6 +28,24 @@ def receive_mesage():
             print(err)
             break
 
+def check_leader_abailability():
+    global client_socket
+
+    while True:
+        try:
+            data = client_socket.recv(1024)
+            print(data.decode('utf-8'))
+            if not data:
+                print("\nChat server currently not available."
+                      "Please wait 5 seconds for reconnection with new server leader.")
+                client_socket.close()
+                time.sleep(5)
+
+                # Start reconnecting to new server leader
+                connect_to_server()
+        except Exception as err:
+            print(err)
+            break
 
 def disconnect_from_server():
     global client_socket
@@ -47,7 +67,8 @@ def connect_to_server():
         client_socket.connect(leader_address)
         client_socket.send('JOIN'.encode('utf-8'))
         print(f'You can start chatting now!')
-        thread_helper.newThread(receive_mesage, ())
+        #thread_helper.newThread(receive_mesage, ())
+        thread_helper.newThread(check_leader_abailability, ())
         while True:
             message = input("")
             try:
@@ -56,13 +77,15 @@ def connect_to_server():
                 print(err)
                 break
     else:
-        print('Did not work please try again later.')
+        print('Did not work trying again if possible.')
         client_socket.close()
+
+    connect_to_server()
 
 if __name__ == '__main__':
     try:
         connect_to_server()
-
+        thread_helper.newThread(receive_mesage,())
     except KeyboardInterrupt:
         print('\n You left the chat.')
         disconnect_from_server()
