@@ -132,26 +132,16 @@ def receive_server_list():
                 update_server_list(multicast_data.SERVER_LIST)
 
 
-def receive_new_message():
-    server_address = ('', ports.SERVER_CLIENT_MESSAGE_PORT)
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(server_address)
-    sock.listen()
-    while True:
-        connection, leader_address = sock.accept()
-        message = pickle.loads(connection.recv(1024))
-        print(message.decode('uft-8'))
-
 
 def send_new_client_message(ip, msg):
     if multicast_data.LEADER == server_data.SERVER_IP and len(multicast_data.CLIENT_LIST) > 0:
         for i in range(len(multicast_data.CLIENT_LIST)):
             client = multicast_data.CLIENT_LIST[i]
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
+            sock.settimeout(3)
             if ip != client:
                 try:
-                    sock.connect((client, ports.SERVER_PORT_FOR_CLIENTS))
+                    sock.connect((client, ports.SERVER_CLIENT_MESSAGE_PORT))
                     if ip != client:
                         packed_msg = pickle.dumps(f'from {ip}: "{msg}"')
                         sock.send(packed_msg)

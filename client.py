@@ -13,20 +13,14 @@ import pickle
 import thread_helper
 
 def receive_mesage():
-    global client_socket
-    server_address = ('', ports.SERVER_PORT_FOR_CLIENTS)
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.bind(server_address)
-    client_socket.listen()
+    server_address = ('', ports.SERVER_CLIENT_MESSAGE_PORT)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(server_address)
+    sock.listen()
     while True:
-        try:
-            client, address = client_socket.accept()
-            message = pickle.loads(client.recv(1024))
-            if message:
-                print(f'{address[0]}: New Message {message}')
-        except Exception as err:
-            print(err)
-            break
+        connection, leader_address = sock.accept()
+        message = pickle.loads(connection.recv(1024))
+        print(message)
 
 def check_leader_abailability():
     global client_socket
@@ -67,7 +61,7 @@ def connect_to_server():
         client_socket.connect(leader_address)
         client_socket.send('JOIN'.encode('utf-8'))
         print(f'You can start chatting now!')
-        #thread_helper.newThread(receive_mesage, ())
+        thread_helper.newThread(receive_mesage, ())
         thread_helper.newThread(check_leader_abailability, ())
         while True:
             message = input("")
@@ -85,7 +79,6 @@ def connect_to_server():
 if __name__ == '__main__':
     try:
         connect_to_server()
-        thread_helper.newThread(receive_mesage,())
     except KeyboardInterrupt:
         print('\n You left the chat.')
         disconnect_from_server()

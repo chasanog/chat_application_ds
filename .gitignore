@@ -104,6 +104,8 @@ fabric.properties
 
 copy.sh
 
+*.log
+
 # Editor-based Rest Client
 .idea/httpRequests
 
