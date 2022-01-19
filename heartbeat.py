@@ -24,6 +24,7 @@ def start_heartbeat():
     msg = ("Heartbeat")
     while server_data.HEARTBEAT_RUNNING:
         sleep(3)  # failure detection every 3 seconds
+        #multicast_data.SERVER_LIST = list(set(multicast_data.SERVER_LIST))
         for x in range(len(multicast_data.SERVER_LIST)):
             if x > len(multicast_data.SERVER_LIST):
                 server.update_server_list(multicast_data.SERVER_LIST)

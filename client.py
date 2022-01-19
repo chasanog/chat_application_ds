@@ -61,7 +61,7 @@ def connect_to_server():
         client_socket.connect(leader_address)
         client_socket.send('JOIN'.encode('utf-8'))
         print(f'You can start chatting now!')
-        thread_helper.newThread(receive_mesage, ())
+
         thread_helper.newThread(check_leader_abailability, ())
         while True:
             message = input("")
@@ -73,11 +73,12 @@ def connect_to_server():
     else:
         print('Did not work trying again if possible.')
         client_socket.close()
-
+    #thread_helper.newThread(receive_mesage, ())
     connect_to_server()
 
 if __name__ == '__main__':
     try:
+        thread_helper.newThread(receive_mesage, ())
         connect_to_server()
     except KeyboardInterrupt:
         print('\n You left the chat.')
