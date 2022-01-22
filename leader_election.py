@@ -44,7 +44,7 @@ def get_neighbour(ring, current_node_ip, direction='left'):
     else:
         return None
 
-# Publish new leader ip
+# Publish new leader ip address
 def sendnewLeaderMessage():
     if multicast_data.LEADER == server_data.SERVER_IP:
         # New Leader IP

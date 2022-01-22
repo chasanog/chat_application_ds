@@ -9,7 +9,7 @@ from time import sleep
 
 import pickle
 
-
+# global variable definitions for multicast sender
 multicastAddress = (multicast_data.MCAST_GRP, multicast_data.MCAST_PORT)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.settimeout(1)
@@ -18,7 +18,7 @@ sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
 
 
-
+# will be sent when a new connection applied and established
 def requestToMulticast():
     sleep(1)
     message = pickle.dumps([multicast_data.SERVER_LIST, multicast_data.LEADER])
@@ -34,6 +34,7 @@ def requestToMulticast():
         print(f'{server_data.SERVER_IP}: Currently no receiver reachable')
         return False
 
+# sent by clients join requests
 def requestToJoinChat():
 
     message = pickle.dumps(['JOIN', '', '', ''])

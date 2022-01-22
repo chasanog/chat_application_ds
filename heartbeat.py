@@ -3,30 +3,27 @@ Date:   25.12.2021
 Group:  10
 
 """
-
-
 import socket
-import sys
-import time
-
-import leader_election
-import ports
+import server
 import server_data
+import time
+import multicast_data
+import ports
+import logging
+import thread_helper
+import leader_election
 
-from server import *
+# used to start heartbeat from server
 
-
-
-# used from Server
 
 def start_heartbeat():
     failed_server = -1
     msg = ("Heartbeat")
     while server_data.HEARTBEAT_RUNNING:
-        sleep(3)  # failure detection every 3 seconds
+        time.sleep(3)  # failure detection every 3 seconds
         multicast_data.SERVER_LIST = list(set(multicast_data.SERVER_LIST))
         for x in range(len(multicast_data.SERVER_LIST)):
-            sleep(1)
+            time.sleep(1)
             if x > len(multicast_data.SERVER_LIST):
                 server.update_server_list(multicast_data.SERVER_LIST)
                 server.send_server_list()
@@ -34,7 +31,7 @@ def start_heartbeat():
             if server_data.isReplicaUpdated == True:
                 server_data.HEARTBEAT_RUNNING = False
                 break
-            sleep(1)
+            time.sleep(1)
             print(multicast_data.SERVER_LIST)
             try:
                 ip = multicast_data.SERVER_LIST[x]
@@ -62,7 +59,6 @@ def start_heartbeat():
                 except socket.timeout:
                     logging.warning(f'Sending Heartbeat: No response to heartbeat from: {ip}')
                     #print(f'Sending Heartbeat: No response to heartbeat from: {ip}')
-                    # if no response is received remove server from list
 
             except:
                 logging.warning(f'Sending Heartbeat: Server not online can not connect to: {ip},{ports.HEARTBEAT_PORT}')
@@ -80,7 +76,6 @@ def start_heartbeat():
                     print(f'Removed crashed leader server {ip} from serverlist')
                 else:
                     # Remove crashed server from serverlist
-                    #multicast_data.SERVER_LIST.pop(failed_server)
                     logging.info(f'Removed crashed server {ip} from serverlist')
                     print('Removed crashed server', ip, 'from serverlist')
                 del multicast_data.SERVER_LIST[failed_server]
@@ -104,6 +99,7 @@ def start_heartbeat():
     restart_heartbeat()
 
 
+# listener to heartbeat messages
 def listen_heartbeat():
 
     server_address = ('', ports.HEARTBEAT_PORT)
@@ -124,14 +120,14 @@ def listen_heartbeat():
             connection.sendall(heartbeat_msg.encode())
 
 
+# function to restart heartbeat when needed
 def restart_heartbeat():
-    if server_data.isReplicaUpdated == True:
+    if server_data.isReplicaUpdated:
         server_data.isReplicaUpdated = False
         # if leader crashed start election
         if server_data.LEADER_CRASH:
             server_data.LEADER_CRASH = False
             print('Starting Leader Election')
-            #leader_election.sendnewLeaderMessage()
             leader_election.start_leader_election(multicast_data.SERVER_LIST, server_data.SERVER_IP)
         server_data.HEARTBEAT_RUNNING = True
         thread_helper.newThread(start_heartbeat, ())
