@@ -89,8 +89,8 @@ def send_server_list():
                 replica = multicast_data.SERVER_LIST[i]
                 ip = replica
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(1)
-
+                sock.settimeout(3)
+                sleep(1)
                 try:
                     sock.connect((ip, ports.SERVERLIST_UPDATE_PORT))
 
@@ -212,7 +212,7 @@ def update_server_list(new_list):
             thread_helper.newThread(heartbeat.start_heartbeat, ())
 
         else:
-            multicast_data.SERVER_LIST = new_list
+            multicast_data.SERVER_LIST = list(set(new_list))
             server_data.isReplicaUpdated = True
 
 def send_client_list():

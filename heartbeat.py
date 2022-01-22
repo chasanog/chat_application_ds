@@ -24,16 +24,25 @@ def start_heartbeat():
     msg = ("Heartbeat")
     while server_data.HEARTBEAT_RUNNING:
         sleep(3)  # failure detection every 3 seconds
-        #multicast_data.SERVER_LIST = list(set(multicast_data.SERVER_LIST))
+        multicast_data.SERVER_LIST = list(set(multicast_data.SERVER_LIST))
         for x in range(len(multicast_data.SERVER_LIST)):
+            sleep(1)
             if x > len(multicast_data.SERVER_LIST):
                 server.update_server_list(multicast_data.SERVER_LIST)
+                server.send_server_list()
+                break
             if server_data.isReplicaUpdated == True:
                 server_data.HEARTBEAT_RUNNING = False
                 break
             sleep(1)
             print(multicast_data.SERVER_LIST)
-            ip = multicast_data.SERVER_LIST[x]
+            try:
+                ip = multicast_data.SERVER_LIST[x]
+            except IndexError:
+                multicast_data.SERVER_LIST = list(set(multicast_data.SERVER_LIST))
+                server.send_server_list()
+                break
+
             # Create TCP socket
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # Timeout socket 2s
@@ -87,10 +96,11 @@ def start_heartbeat():
                 print(f'Removed crashed server: {ip}')
             server.update_server_list(new_server_list)
             server_data.HEARTBEAT_RUNNING = False
+            break
 
         if server_data.HEARTBEAT_RUNNING == False:
+            print('Heartbeat stopped')
             break
-    print('Heartbeat stopped')
     restart_heartbeat()
 
 

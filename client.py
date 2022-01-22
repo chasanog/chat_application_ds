@@ -44,7 +44,7 @@ def check_leader_abailability():
 def disconnect_from_server():
     global client_socket
 
-    message = 'disconnect'
+    message = 'disconnected'
     message = message.encode()
     client_socket.send(message)
     client_socket.close
