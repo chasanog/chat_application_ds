@@ -32,7 +32,8 @@ def start_heartbeat():
                 server_data.HEARTBEAT_RUNNING = False
                 break
             time.sleep(1)
-            print(multicast_data.SERVER_LIST)
+            print('Heartbeat ongoing')
+            #print(multicast_data.SERVER_LIST)
             try:
                 ip = multicast_data.SERVER_LIST[x]
             except IndexError:

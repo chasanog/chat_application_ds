@@ -4,19 +4,12 @@ Group:      10
 
 ring-algorithm - Server leader election
 """
-# import Modules
-import os
-import struct
-import sys
-import threading
-import socket
-import pickle #is needed so send objects (tuple,list) through tcp
-import logging
 
+import socket
+from time import sleep
 import multicast_data
 import ports
 import server_data
-from server import *
 
 neighbour = ''
 # Sorted Ip
