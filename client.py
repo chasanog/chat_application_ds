@@ -37,6 +37,7 @@ def check_leader_abailability():
         except Exception as err:
             print(err)
             break
+
 # disconnects from server and sends a message for disconnection
 def disconnect_from_server():
     global client_socket
